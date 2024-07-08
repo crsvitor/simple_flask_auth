@@ -31,8 +31,8 @@ def login():
     password = user_payload.get("password")
     
     user = User.query.filter_by(username=username).first()
-    valid_password = bcrypt.checkpw(str.encode(password), str.encode(user.password))
-    
+    valid_password = bcrypt.checkpw(password=str.encode(password), hashed_password=user.password)
+
     if user and valid_password:
         login_user(user)
         return jsonify({"message": "User authenticated!"})
@@ -70,7 +70,7 @@ def load_user(user_id):
     user = User.query.get(user_id)
 
     if user:
-        return jsonify({"username": user.name})
+        return jsonify({"username": user.username})
 
     return jsonify({"message": "User not found!"}), 404
 
@@ -85,7 +85,7 @@ def update_user(user_id):
         return jsonify({ "message": "Forbidden action!" }), 403
 
     if user and new_password:
-        user.password = new_password
+        user.password = bcrypt.hashpw(str.encode(new_password), bcrypt.gensalt())
         db.session.commit()
 
         return jsonify({ "message": f"User {user_id} updated!" })
@@ -106,6 +106,7 @@ def delete_user(user_id):
     if user:
         db.session.delete(user)
         db.session.commit()
+        return jsonify({ "message": f"User {user_id} deleted!" })
 
     return jsonify({"message": "User not found!"}), 404
 
