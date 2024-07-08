@@ -21,7 +21,7 @@ def load_user(user_id):
 
 @app.route("/login", methods=["POST"])
 def login():
-    user_payload = request.json()
+    user_payload = request.json
 
     username = user_payload.get("username")
     password = user_payload.get("password")
@@ -43,7 +43,7 @@ def logout():
 
 @app.route("/user", methods=["POST"])
 def create_user():
-    user_payload = request.json()
+    user_payload = request.json
 
     username = user_payload.get("username")
     password = user_payload.get("password")
@@ -74,7 +74,7 @@ def load_user(user_id):
 @login_required
 def update_user(user_id):
     user = User.query.get(user_id)
-    user_payload = request.json()
+    user_payload = request.json
     new_password = user_payload.get("password")
 
     if current_user.role != 'admin':
