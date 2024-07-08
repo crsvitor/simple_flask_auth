@@ -1,6 +1,6 @@
 import bcrypt
 from flask import Flask, request, jsonify
-from flask_login import LoginManager, login_user, logout_user, login_required
+from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from database import db
 from models.user import User
 
@@ -40,6 +40,70 @@ def login():
 def logout():
     logout_user()
     return jsonify({"message": "User logged out!"})
+
+@app.route("/user", methods=["POST"])
+def create_user():
+    user_payload = request.json()
+
+    username = user_payload.get("username")
+    password = user_payload.get("password")
+
+    if username and password:
+        hashed_password = bcrypt.hashpw(str.encode(password), bcrypt.gensalt())
+
+        user = User(username=username, password=hashed_password, role="user")
+
+        db.session.add(user)
+        db.session.commit()
+
+        return jsonify({"message": "User created successfully!"})
+    
+    return jsonify({"message": "Invalid credentials!"}), 400
+
+@app.route("/user/<int:user_id>", methods=["GET"])
+@login_required
+def load_user(user_id):
+    user = User.query.get(user_id)
+
+    if user:
+        return jsonify({"username": user.name})
+
+    return jsonify({"message": "User not found!"}), 404
+
+@app.route("/user/<int:user_id>", methods=["PUT"])
+@login_required
+def update_user(user_id):
+    user = User.query.get(user_id)
+    user_payload = request.json()
+    new_password = user_payload.get("password")
+
+    if current_user.role != 'admin':
+        return jsonify({ "message": "Forbidden action!" }), 403
+
+    if user and new_password:
+        user.password = new_password
+        db.session.commit()
+
+        return jsonify({ "message": f"User {user_id} updated!" })
+    
+    return jsonify({"message": "User not found!"}), 404
+
+@app.route("/user/<int:user_id>", methods=["DELETE"])
+@login_required
+def delete_user(user_id):
+    user = User.query.get(user_id)
+
+    if current_user.role != 'admin':
+        return jsonify({ "message": "Forbidden action!" }), 403
+
+    if current_user.id == user_id:
+        return jsonify({ "message": "Forbidden action!" }), 403
+
+    if user:
+        db.session.delete(user)
+        db.session.commit()
+
+    return jsonify({"message": "User not found!"}), 404
 
 if __name__ == "__main__":
     app.run(debug=True)
