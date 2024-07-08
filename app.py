@@ -1,3 +1,4 @@
+import os
 import bcrypt
 from flask import Flask, request, jsonify
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
@@ -7,8 +8,11 @@ from models.user import User
 app = Flask(__name__)
 login_manager = LoginManager()
 
+basedir = os.path.abspath(os.path.dirname(__file__))
+database_path = os.path.join(basedir, "database.db")
+
+app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{database_path}"
 app.config["SECRET_KEY"] = "my_secret_key"
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///database.db"
 
 db.init_app(app)
 login_manager.init_app(app)
