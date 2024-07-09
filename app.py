@@ -11,7 +11,7 @@ login_manager = LoginManager()
 basedir = os.path.abspath(os.path.dirname(__file__))
 database_path = os.path.join(basedir, "database.db")
 
-app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{database_path}"
+app.config["SQLALCHEMY_DATABASE_URI"] = "mysql+pymysql://root:admin123@127.0.0.1:3306/flask-crud"
 app.config["SECRET_KEY"] = "my_secret_key"
 
 db.init_app(app)
@@ -31,9 +31,8 @@ def login():
     password = user_payload.get("password")
     
     user = User.query.filter_by(username=username).first()
-    valid_password = bcrypt.checkpw(password=str.encode(password), hashed_password=user.password)
 
-    if user and valid_password:
+    if user and bcrypt.checkpw(password=str.encode(password), hashed_password=str.encode(user.password)):
         login_user(user)
         return jsonify({"message": "User authenticated!"})
 
@@ -55,7 +54,7 @@ def create_user():
     if username and password:
         hashed_password = bcrypt.hashpw(str.encode(password), bcrypt.gensalt())
 
-        user = User(username=username, password=hashed_password, role="user")
+        user = User(username=username, password=hashed_password, role="admin")
 
         db.session.add(user)
         db.session.commit()
